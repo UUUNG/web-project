@@ -1,0 +1,127 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <div class="timeline">
+      {% if user %}
+        <div>     
+          <form id="twit-form" action="/post" method="post">
+            <div class="input-group">
+              <textarea id="twit" name="content" maxlength="140"></textarea>
+            </div>
+            <div>
+              <button id="twit-btn" type="submit" class="btn">업로드</button>
+            </div>
+          </form>
+        </div>
+
+      {% endif %}
+
+      <div class="twits">
+        {% for twit in twits %}
+          <div class="twit">
+            <div class="twit-author" id="twit-author" data-userid="{{twit.User.id}}" onclick="showUserProfile(this)">{{twit.User.nick}}</div>
+            <div class="twit-content">{{twit.content}}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- 모달을 표시할 영역 -->
+  <div class="modal-container" id="user-profile-modal" style="display: none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>User Profile</h2>
+        <button class="close-modal"  onclick="closeModal()">Close</button>
+      </div>
+      <div class="modal-body">
+        <!-- 프로필 정보를 표시할 영역 -->
+        <input id="my-id" type="hidden" value="{{user.id}}">
+        <div id="user-profile"></div>
+        <button class="follow"  onclick="" id="follow-button">팔로우</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script>
+    async function showUserProfile(element) {
+      const userId = element.getAttribute('data-userid');
+      try {
+        // 서버에 해당 User의 정보를 요청합니다.
+        const userProfileModal = document.getElementById('user-profile-modal');
+        const userProfile = document.getElementById('user-profile'); 
+        const myId = document.getElementById('my-id').value;
+        const followButton = userProfileModal.querySelector('.follow');
+
+        if (myId === userId) {
+          followButton.style.pointerEvents = 'none'; // 버튼 클릭 비활성화
+          followButton.style.background = 'gray'; // 비활성화된 스타일 적용
+        } else {
+          followButton.style.pointerEvents = 'auto'; // 버튼 클릭 활성화
+          followButton.style.background = ''; // 기본 스타일 복원
+        }
+
+        const response = await fetch(`/user/${userId}`);
+        const user = await response.json();
+        
+        console.log("user in main.html", user)
+
+        
+        // 받아온 정보를 모달 창에 표시합니다.
+        userProfile.innerHTML = `
+          <h3>${user.nick}</h3>
+          <p>Email: ${user.email}</p>
+          <p>SNS ID: ${user.snsId}</p>
+          <p>팔로잉 수: ${user.followersCount}</p>
+          <p>팔로워 수: ${user.followingCount}</p>
+        `;
+        //followingCountElement.textContent  = user.followingUserCount
+        
+        followButton.addEventListener('click', function() {
+          incrementFollowing(userId); // 해당 프로필의 사용자 ID를 인자로 전달
+          location.reload();
+        });
+
+        // User Profile 모달 창을 표시합니다.
+        userProfileModal.style.display = 'block';
+      } catch (error) {
+        console.error(error);
+      }
+  }
+  function closeModal() {
+    const userProfileModal = document.getElementById('user-profile-modal');
+    userProfileModal.style.display = 'none';
+  }
+  function incrementFollowing(followingUserId) {
+    
+    // 팔로잉 버튼 클릭 이벤트 처리
+    alert("팔로잉")
+    const userIdElement = document.getElementById('my-id'); // 수정된 부분
+    const userId = userIdElement.value;
+    console.log("userIdElement in main.html", userIdElement)
+    console.log("userId in main.html", userId)
+    console.log("followingUserId in main.html", followingUserId)
+    $.ajax({
+      url: '/follow', // 서버의 팔로잉 엔드포인트 URL
+      method: 'POST',
+      data: {
+        userId: userId,
+        followingUserId: followingUserId
+      },
+      success: function(response) {
+        // 팔로잉 버튼 클릭 성공 시 실행할 코드
+        alert('Following successful');
+        // 팔로잉 버튼을 새로운 상태로 업데이트하거나 다른 작업 수행
+        $('#following-count').text(response.followingCount);
+      },
+      error: function(xhr, status, error) {
+        // 팔로잉 버튼 클릭 실패 시 실행할 코드
+        alert(`Following failed:', ${error}`);
+        // 에러 처리 또는 다른 작업 수행
+      }
+    });
+  }
+
+  </script>
+
+{% endblock %}

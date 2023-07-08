@@ -1,0 +1,69 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <div class="timeline">
+    <div class="follower-count" data-userid={{user.id}} id="follower-count"></div>
+    <div class="followings half">
+      <h2>팔로잉 목록</h2>
+      
+      {% if following %}
+        {% for follow in following %}
+          <div id="followings"></div>
+          <div>{{ follow.Following.nick }}</div>
+        {% endfor %}
+      {% else %}
+        <p>팔로잉이 없습니다.</p>
+      {% endif %} 
+     
+    </div>
+    <div class="followers half">
+      <h2>팔로워 목록</h2>
+      {% if user and user.id %}
+        <div id="followers"></div>
+      {% endif %} 
+      {% if followers %}
+        {% for follow in followers %}
+          <div>{{ follow.Follower.nick }}</div>
+        {% endfor %}
+      {% else %}
+        <p>팔로워가 없습니다.</p>
+      {% endif %} 
+     
+    </div>
+  </div>
+{% endblock %}
+
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+  window.onload = async () => {
+    const userId = document.querySelector('.follower-count').getAttribute('data-userid');
+    alert(userId)
+    const followingElement = document.querySelector('.followings');
+    const followersElement = document.querySelector('.followers');
+    console.log("userId in profile", userId)
+    try {
+      // console.log("userId in profile", userId)
+      const response = await fetch(`/profile/${userId}`);
+      console.log("response in profile", response.data)
+      const { following, followers } = response.data;
+
+      // 팔로잉 목록 렌더링
+      if (following.length > 0) {
+        const followingList = following.map((follow) => `<div>${follow.Following.nick}</div>`);
+        followingElement.innerHTML = followingList.join('');
+      } else {
+        followingElement.innerHTML = '<p>팔로잉이 없습니다.</p>';
+      }
+
+      // 팔로워 목록 렌더링
+      if (followers.length > 0) {
+        const followersList = followers.map((follow) => `<div>${follow.Follower.nick}</div>`);
+        followersElement.innerHTML = followersList.join('');
+      } else {
+        followersElement.innerHTML = '<p>팔로워가 없습니다.</p>';
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+</script>
